@@ -1,0 +1,90 @@
+
+== pre-flight ==
+   ! TELEGRAM_ALLOWED_USERS had non-numeric entries; keeping only: 1590306400
+   !   (source value was: 1590306400,Y)
+   target user      : hermes-telebot
+   target HERMES_HOME: /home/hermes-telebot/.hermes
+   allowed users    : 1590306400
+   home channel     : 1590306400
+   bot token        : reusing the existing token (old gateway will be stopped)
+
+== 1/8 user hermes-telebot ==
+   already exists
+   groups: hermes-telebot
+
+== 2/8 hermes install ==
+   already installed
+Hermes Agent v0.22.7 (2026.9.24) · stable · local b200f5bc60e3
+Install directory: /home/hermes-telebot/.hermes/hermes-agent
+Install method: git
+Python: 3.14.9
+OpenAI SDK: 2.54.0
+Up to date
+
+== 3/8 minimal .env ==
+   reading /home/dnguyen/Projects/hermes-telebot-setup/hermes-telebot.secrets
+   wrote /home/hermes-telebot/.hermes/.env (0600 hermes-telebot:hermes-telebot)
+
+== 4/8 model configuration ==
+✓ Set providers.litellm.base_url = https://llm.llmxyz.net/v1 in /home/hermes-telebot/.hermes/config.yaml
+✓ Set providers.litellm.key_env = LITELLM_API_KEY in /home/hermes-telebot/.hermes/config.yaml
+✓ Set model.provider = litellm in /home/hermes-telebot/.hermes/config.yaml
+✓ Set model.default = cloud.deepseek-v4.1-flash in /home/hermes-telebot/.hermes/config.yaml
+✓ Set approvals.mode = smart in /home/hermes-telebot/.hermes/config.yaml
+
+== 5/8 system unit ==
+   unit already present: /etc/systemd/system/hermes-gateway-2f86886c.service
+   renamed hermes-gateway-2f86886c.service -> hermes-gateway.service
+   unit name: hermes-gateway
+
+== 5b/8 sandbox drop-in ==
+   wrote /etc/systemd/system/hermes-gateway.service.d/10-isolation.conf
+
+== 6/8 token flip (Telegram delivers each update to ONE consumer) ==
+Removed "/home/dnguyen/.config/systemd/user/default.target.wants/hermes-gateway.service".
+   stopped and disabled the old user unit
+   state: active
+
+== 7/8 acceptance tests ==
+   PASS  no privileged groups on hermes-telebot
+   FAIL  not a sudoer
+   PASS  cannot read operator ssh key
+   PASS  cannot read operator .env
+   PASS  cannot read operator home at all
+   PASS  cannot use docker socket
+   PASS  cannot write to operator home
+   PASS  home is 0700
+   PASS  HERMES_HOME is 0700
+   PASS  .env is 0600
+   PASS  NoNewPrivileges enforced
+   PASS  ProtectSystem=strict
+   PASS  CapEff is empty
+   PASS  NoNewPrivs=1 on the live process
+   PASS  runs as hermes-telebot
+   PASS  unit is enabled
+   FAIL  live process cannot see /home/dnguyen (InaccessiblePaths)
+   PASS  live process can still read its own .env
+   PASS  live process cannot write outside its home
+
+== journal tail ==
+Nov 05 19:42:53 dnguyen-NUC8i5BEK systemd[1]: Started hermes-gateway.service - Hermes Agent Gateway - Messaging Platform Integration.
+
+== gateway self-report ==
+● hermes-gateway.service - Hermes Agent Gateway - Messaging Platform Integration
+     Loaded: loaded (/etc/systemd/system/hermes-gateway.service; enabled; preset: enabled)
+    Drop-In: /etc/systemd/system/hermes-gateway.service.d
+             └─10-isolation.conf
+     Active: active (running) since Thu 2026-11-05 19:42:53 EET; 1s ago
+   Main PID: 17603 (hermes)
+      Tasks: 5 (limit: 512)
+     Memory: 86.3M (max: 8.0G available: 7.9G peak: 102.0M)
+        CPU: 1.440s
+     CGroup: /system.slice/hermes-gateway.service
+             └─17603 /home/hermes-telebot/.hermes/tools/python-3.14.9+20261021-linux-x64/bin/python3 -I -c "import os, re, sys\nimport contextlib, hashlib, io, pathlib, shutil, subprocess\nos.environ.pop('PYTHONHOME', None)\nos.environ.pop('PYTHONPATH', None)\nsys.path.insert(0, '/home/hermes-telebot/.hermes/hermes-agent')\ndef _hermes_closure_repair():\n    import contextlib, hashlib, io, shutil, subprocess\n    from pathlib import Path\n    root = Path('/home/hermes-telebot/.hermes/hermes-agent')\n    git = root / '.git'\n    try:\n        if git.is_file():\n            text = git.read_text(encoding='utf-8-sig').strip()\n            git = root / text[7:].strip() if text.startswith('gitdir:') else git\n        fields = dict(line.partition('=')[::2] for line in (git / 'hermes-update-pull').read_text(encoding='utf-8-sig').splitlines())\n    except OSError:\n        return\n    pre = fields.get('pre', '').strip()\n    if not re.fullmatch('[0-9a-f]{40}|[0-9a-f]{64}', pre):\n        return\n    closure = git / 'hermes-update-recovery' / pre\n    files = (*('hermes_cli/_early_recovery.py', 'hermes_cli/update_lock.py', 'hermes_cli/update_custody.py'), 'hermes_cli/__init__.py')\n\n    def blob_id(data):\n        return hashlib.new('sha1' if len(pre) == 40 else 'sha256', b'blob %d\\0' % len(data) + data).hexdigest()\n\n    def verified():\n        try:\n            listed = dict(line.split(' ', 1)[::-1] for line in (closure / 'MANIFEST').read_text(encoding='utf-8-sig').splitlines())\n            return (set(listed) == set(files) and listed['hermes_cli/__init__.py'] == blob_id(b'')\n                    and all(blob_id((closure / rel).read_bytes()) == oid for rel, oid in listed.items()))\n        except (OSError, ValueError):\n            return False\n\n    if not verified():\n        exe = fields.get('git', '').strip()\n        if not (os.path.isabs(exe) and os.path.isfile(exe)):\n            names = ('git.exe',) if os.name == 'nt' else ('git',)\n            exe = next((os.path.join(d, n) for d in os.environ.get('PATH', '').split(os.pathsep) if os.path.isabs(d)\n                        for n in names if os.path.isfile(os.path.join(d, n))), '')\n        if not exe:\n            return\n\n        def git_out(*args):\n            done = subprocess.run([exe, '--no-replace-objects', '-C', str(root), *args], capture_output=True, timeout=60,\n                                  stdin=subprocess.DEVNULL, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))\n            if done.returncode != 0:\n                raise OSError(done.stderr)\n            return done.stdout\n\n        staging = closure.with_name('.%s.%d.launch' % (pre, os.getpid()))\n        try:\n            ids = {}\n            for entry in git_out('ls-tree', '-z', '--full-tree', pre, '--', *('hermes_cli/_early_recovery.py', 'hermes_cli/update_lock.py', 'hermes_cli/update_custody.py')).split(b'\\0'):\n                meta, _, rel = entry.decode('utf-8', 'replace').partition('\\t')\n                if meta.split()[1:2] == ['blob']:\n                    ids[rel] = meta.split()[2]\n            blobs = {'hermes_cli/__init__.py': b''}\n            for rel in ('hermes_cli/_early_recovery.py', 'hermes_cli/update_lock.py', 'hermes_cli/update_custody.py'):\n                blobs[rel] = git_out('cat-file', 'blob', ids[rel])\n                if blob_id(blobs[rel]) != ids[rel]:  # an object that inflates to bytes pre never had\n                    raise OSError('%s does not hash to %s' % (rel, ids[rel]))\n            blobs['MANIFEST'] = ''.join('%s %s\\n' % (blob_id(data), rel) for rel, data in blobs.items()).encode('utf-8')\n            for rel, data in blobs.items():\n                (staging / rel).parent.mkdir(parents=True, exist_ok=True)\n                (staging / rel).write_bytes(data)\n            shutil.rmtree(closure, ignore_errors=True)\n            os.replace(staging, closure)\n        except (OSError, KeyError, subprocess.SubprocessError):\n            pass\n        finally:\n            shutil.rmtree(staging, ignore_errors=True)\n        if not verified():\n            return\n    for name in [n for n in sys.modules if n.split('.')[0] in ('hermes_cli', 'hermes_bootstrap', 'hermes_constants', 'pm')]:\n        del sys.modules[name]\n    tree = os.path.normcase(os.path.realpath(root))\n    sys.path[:] = [str(closure)] + [p for p in sys.path if p and os.path.normcase(os.path.realpath(p)) != tree\n                                    and not os.path.normcase(os.path.realpath(p)).startswith(tree + os.sep)]\n    sys.dont_write_bytecode = True\n    said = io.StringIO()\n    restored = False\n    try:\n        with contextlib.redirect_stderr(said):\n            from hermes_cli import _early_recovery\n            restored = _early_recovery.restore_interrupted_pull(root)\n    except Exception as exc:\n        said.write('hermes: the checkout cannot start after an interrupted \`hermes update\`, and it was not '\n                   'repaired: %s\\n' % (exc,))\n    if restored:\n        sys.stderr.write('hermes: the checkout could not start after an interrupted \`hermes update\`; '\n                         'repaired it with the recovery code saved before the update.\\n' + said.getvalue())\n        _early_recovery.relaunch_after_restore()\n    sys.stderr.write(said.getvalue() or 'hermes: the checkout cannot start after an interrupted \`hermes update\`; '\n                     'launch again once the update that owns it finishes.\\n')\n    raise SystemExit(1)\nif sys.argv[1:2] == ['--print-runtime-command']:\n    sys.dont_write_bytecode = True\n    from pathlib import Path\n    try:\n        from hermes_cli import _early_recovery\n    except Exception as exc:\n        if _hermes_closure_repair() or not isinstance(exc, ImportError):\n            raise\n        _early_recovery = None  # a tree without the repair: the imports below report real damage\n    if _early_recovery is not None and _early_recovery.restore_interrupted_pull(Path('/home/hermes-telebot/.hermes/hermes-agent')):\n        _early_recovery.relaunch_after_restore()\n    from hermes_constants import get_default_hermes_root\n    os.environ['HERMES_HOME'] = os.environ.get('HERMES_HOME') or str(get_default_hermes_root())\n    from hermes_cli._launchers import print_runtime_command\n    print_runtime_command(Path('/home/hermes-telebot/.hermes/hermes-agent'), sys.argv[2:])\n    sys.exit(0)\nsys._hermes_pin_default_home = True\ntry:\n    import hermes_bootstrap\nexcept Exception:\n    _hermes_closure_repair()\n    raise\nif not os.environ.get('HERMES_HOME'):\n    from hermes_constants import get_default_hermes_root\n    os.environ['HERMES_HOME'] = str(get_default_hermes_root())\nif sys.argv[1:2] == ['--run-module']:\n    import runpy\n    if len(sys.argv) < 3: sys.exit('hermes: --run-module needs a module')\n    module = sys.argv.pop(2)\n    del sys.argv[1]\n    runpy.run_module(module, run_name='__main__', alter_sys=True)\n    sys.exit(0)\nfrom hermes_cli.main import main\nsys.argv[0] = re.sub(r'(-script\\.pyw|\\.exe)?\$', '', sys.argv[0])\nsys.exit(main())\n" gateway run
+✓ System gateway service is running
+Configured to run as: hermes-telebot
+✓ System service starts at boot without requiring systemd linger
+
+== 8/8 rollback notes ==
+
+================ 17 passed, 2 failed =================
